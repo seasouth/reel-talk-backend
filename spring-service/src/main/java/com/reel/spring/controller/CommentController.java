@@ -29,6 +29,7 @@ public class CommentController {
 	CommentService commentService;
 	
 	// Create Comment rest api
+	@CrossOrigin(origins = "https://reel-talk-kappa.vercel.app/")
 	@PostMapping("/save")
 	public Comment saveNewComment(@RequestBody SaveCommentDto commentDto) {
 		return commentService.save(commentDto);
