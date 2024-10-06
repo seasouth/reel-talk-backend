@@ -19,7 +19,7 @@ import com.reel.spring.web.dto.SaveCommentDto;
 
 @CrossOrigin
 @RestController
-@RequestMapping("comment/")
+@RequestMapping("/comment")
 public class CommentController {
 	
 	@Autowired
