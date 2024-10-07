@@ -20,8 +20,7 @@ public class SecurityConfig {
             .and()
             .csrf().disable()  // Disable CSRF for APIs, if appropriate
             .authorizeHttpRequests()
-            .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()  // Allow OPTIONS requests
-            .anyRequest().authenticated();  // Require authentication for other requests
+            .anyRequest().permitAll();  // Require authentication for other requests
 
         return http.build();
     }
