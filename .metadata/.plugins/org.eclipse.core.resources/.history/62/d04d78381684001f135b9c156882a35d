@@ -1,0 +1,82 @@
+package com.reel.spring.config;
+
+import java.util.Arrays;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfiguration;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import com.reel.spring.service.UserService;
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfiguration {
+	
+	@Autowired
+	private JwtTokenProvider tokenProvider;
+	
+	@Autowired
+	private UserService userService;
+	
+	@Bean
+	BCryptPasswordEncoder passwordEncoder() {
+		return new BCryptPasswordEncoder();
+	}
+	
+	@Bean
+    AuthenticationManager authenticationManagerBean(HttpSecurity http) throws Exception {
+        AuthenticationManagerBuilder authenticationManagerBuilder = http.getSharedObject(AuthenticationManagerBuilder.class);
+        authenticationManagerBuilder.userDetailsService(userService).passwordEncoder(passwordEncoder());
+        return authenticationManagerBuilder.build();
+    }
+	
+	@Bean
+	DaoAuthenticationProvider authenticationProvider() {
+		DaoAuthenticationProvider auth = new DaoAuthenticationProvider();
+		auth.setUserDetailsService(userService);
+		auth.setPasswordEncoder(passwordEncoder());
+		return auth;
+	}
+	
+	
+	@Bean
+	SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+		
+		http.cors().and().csrf().disable()
+			.authorizeHttpRequests((authorize) -> authorize
+					.requestMatchers("/user/newuser", "/user/login", "/comment/save", "/comment/thread/**").permitAll()
+					.anyRequest().authenticated()
+			)
+			.httpBasic(Customizer.withDefaults())
+			.apply(new JwtTokenConfigurer(tokenProvider));
+		
+		return http.build();
+	}
+	
+	@Bean
+	CorsConfigurationSource corsConfigurationSource() {
+	    final CorsConfiguration config = new CorsConfiguration();
+
+	    config.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
+	    config.setAllowedMethods(Arrays.asList("GET", "POST", "OPTIONS", "DELETE", "PUT", "PATCH"));
+	    config.setAllowCredentials(true);
+	    config.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type"));
+
+	    final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+	    source.registerCorsConfiguration("/**", config);
+
+	    return source;
+	}
+}
